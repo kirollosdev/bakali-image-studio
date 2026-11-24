@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="author" content="Kirollos Magdy" />
+  <link rel="author" href="https://kirollosmagdy.com" />
+  <title>Bakali Image Studio</title>
+  <link rel="preconnect" href="https://talabat.dhmedia.io" crossorigin />
+</head>
+<body class="booting">
+  <!-- Login -->
+  <section id="login" class="login" hidden>
+    <form id="loginForm" class="card" novalidate>
+      <h1>Bakali Image Studio</h1>
+      <p class="sub">Sign in to continue</p>
+      <label>Email<input name="email" type="email" autocomplete="username" required autofocus /></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
+      <p class="form-error" role="alert" hidden></p>
+      <button class="btn primary block" type="submit">Log in</button>
+      <p class="hint">No account? Ask the developer to add you.</p>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="app" hidden>
+    <header class="top">
+      <div class="brand">
+        <h1>Bakali Image Studio</h1>
+        <p class="sub"><span id="storeName"></span> · <a id="storeLink" target="_blank" rel="noopener">Talabat page</a></p>
+      </div>
+      <div class="progress" aria-live="polite">
+        <div class="bar"><span id="progressBar"></span></div>
+        <p><strong id="doneCount">0</strong> / <span id="totalCount">0</span> new images · <span id="leftCount">0</span> left</p>
+      </div>
+      <div class="account">
+        <span class="who"><strong id="meName"></strong> <span id="meRole" class="role"></span></span>
+        <button id="openPeople" class="btn small dev-only" type="button">People</button>
+        <button id="openPassword" class="btn small" type="button">Password</button>
+        <button id="logout" class="btn small ghost" type="button">Log out</button>
+      </div>
+    </header>
+
+    <section class="toolbar">
+      <input id="search" type="search" placeholder="Search name or description…" aria-label="Search" />
+      <select id="category" aria-label="Category"><option value="">All categories</option></select>
+      <select id="status" aria-label="Status">
+        <option value="">All items</option>
+        <option value="missing">Missing new image</option>
+        <option value="done">Has new image</option>
+      </select>
+      <label class="seg" title="Language used for downloaded file names">
+        File names
+        <select id="nameLang">
+          <option value="ar">Arabic</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <label class="btn edit-only" title="Pick many images; each is matched to an item by its file name">
+        Bulk upload
+        <input id="bulkInput" type="file" accept="image/*" multiple hidden />
+      </label>
+      <button id="downloadAll" class="btn primary" type="button">Download all (.zip)</button>
+    </section>
+
+    <main class="wrap">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th class="c-num">#</th>
+            <th class="c-img">Talabat image</th>
+            <th>Title</th>
+            <th class="c-desc">Description</th>
+            <th class="c-price">Regular</th>
+            <th class="c-price">Sale</th>
+            <th class="c-new">New image</th>
+            <th class="c-act">Download</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p id="empty" class="empty" hidden>No items match.</p>
+    </main>
+  </div>
+
+  <footer class="foot">
+    Designed and Developed with <span class="heart" aria-label="love">♥</span> by <a href="https://kirollosmagdy.com" target="_blank" rel="noopener">Kirollos Magdy</a>
+  </footer>
+
+  <p id="toast" class="toast" role="status" hidden></p>
+
+  <dialog id="viewer"><img alt="" /><button type="button" class="btn" data-close>Close</button></dialog>
+
+  <!-- People (developer only) -->
+  <dialog id="people" class="panel">
+    <header class="panel-head"><h2>People</h2><button type="button" class="btn small ghost" data-close>Close</button></header>
+    <p class="sub">Editors can upload, replace and remove images. Viewers can only look and download.</p>
+    <table class="people">
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
+      <tbody id="peopleRows"></tbody>
+    </table>
+    <form id="addForm" class="add" novalidate>
+      <h3>Add a person</h3>
+      <div class="add-grid">
+        <label>Name<input name="name" required maxlength="80" /></label>
+        <label>Email<input name="email" type="email" required /></label>
+        <label>Role
+          <select name="role"><option value="editor">Editor</option><option value="viewer">Viewer</option></select>
+        </label>
+        <button class="btn primary" type="submit">Add</button>
+      </div>
+      <p class="form-error" role="alert" hidden></p>
+    </form>
+    <div id="issued" class="issued" hidden>
+      <p><strong id="issuedTitle"></strong></p>
+      <p>Send them this link and password. It is shown only once.</p>
+      <div class="issued-box"><code id="issuedText"></code><button type="button" class="btn small" id="copyIssued">Copy</button></div>
+    </div>
+  </dialog>
+
+  <!-- Change own password -->
+  <dialog id="password" class="panel narrow">
+    <header class="panel-head"><h2>Change password</h2><button type="button" class="btn small ghost" data-close>Close</button></header>
+    <form id="passwordForm" novalidate>
+      <label>Current password<input name="current" type="password" autocomplete="current-password" required /></label>
+      <label>New password<input name="next" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <label>Repeat new password<input name="again" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <p class="form-error" role="alert" hidden></p>
+      <button class="btn primary block" type="submit">Save password</button>
+    </form>
+  </dialog>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

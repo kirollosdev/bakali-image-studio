@@ -1,0 +1,4 @@
+scripts/seed
+node_modules
+dist
+.env*
