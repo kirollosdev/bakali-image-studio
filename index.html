@@ -24,8 +24,8 @@
   </section>
 
   <!-- App -->
-  <div id="app" hidden>
-    <header class="top">
+  <div id="app" class="shell" hidden>
+    <aside class="side">
       <div class="brand">
         <h1>Bakali Image Studio</h1>
         <p class="sub"><span id="storeName"></span> · <a id="storeLink" target="_blank" rel="noopener">Talabat page</a></p>
@@ -34,14 +34,26 @@
         <div class="bar"><span id="progressBar"></span></div>
         <p><strong id="doneCount">0</strong> / <span id="totalCount">0</span> new images · <span id="leftCount">0</span> left</p>
       </div>
-      <div class="account">
-        <span class="who"><strong id="meName"></strong> <span id="meRole" class="role"></span></span>
-        <button id="openPeople" class="btn small dev-only" type="button">People</button>
-        <button id="openPassword" class="btn small" type="button">Password</button>
-        <button id="logout" class="btn small ghost" type="button">Log out</button>
+      <nav class="side-nav" aria-label="Account">
+        <button id="openPeople" class="nav-item dev-only" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Zm-12 9c0-3 3.6-5 8-5s8 2 8 5"/></svg>
+          People
+        </button>
+        <button id="openPassword" class="nav-item" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          Change password
+        </button>
+      </nav>
+      <div class="me">
+        <span class="avatar" id="meInitial" aria-hidden="true"></span>
+        <span class="me-text"><strong id="meName"></strong><span id="meRole" class="role"></span></span>
+        <button id="logout" class="icon-btn" type="button" title="Log out" aria-label="Log out">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg>
+        </button>
       </div>
-    </header>
+    </aside>
 
+    <div class="content">
     <section class="toolbar">
       <input id="search" type="search" placeholder="Search name or description…" aria-label="Search" />
       <select id="category" aria-label="Category"><option value="">All categories</option></select>
@@ -82,9 +94,13 @@
       </table>
       <p id="empty" class="empty" hidden>No items match.</p>
     </main>
+    <footer class="foot">
+      Designed and Developed with <span class="heart" aria-label="love">♥</span> by <a href="https://kirollosmagdy.com" target="_blank" rel="noopener">Kirollos Magdy</a>
+    </footer>
+    </div>
   </div>
 
-  <footer class="foot">
+  <footer class="foot login-foot">
     Designed and Developed with <span class="heart" aria-label="love">♥</span> by <a href="https://kirollosmagdy.com" target="_blank" rel="noopener">Kirollos Magdy</a>
   </footer>
 

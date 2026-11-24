@@ -608,6 +608,7 @@ async function enter(user) {
   me = user;
   document.body.dataset.role = user.role;
   $('#meName').textContent = user.name;
+  $('#meInitial').textContent = (user.name || '?').trim().charAt(0).toUpperCase();
   $('#meRole').textContent = ROLE_LABEL[user.role];
   $('#login').hidden = true;
   $('#app').hidden = false;
