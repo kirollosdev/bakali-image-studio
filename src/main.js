@@ -483,7 +483,7 @@ function renderLinks(links, users) {
         .map(
           (l) => `<tr data-link="${esc(l.id)}">
             <td>${l.kind === 'join' ? `Invite · ${ROLE_LABEL[l.role]}` : 'Password reset'}</td>
-            <td>${esc(l.kind === 'join' ? l.label || '—' : name(l.email))}</td>
+            <td>${esc(l.kind === 'join' ? `${l.name} · ${l.email}` : `${name(l.email)} · ${l.email}`)}</td>
             <td>${until(l.expiresAt)}</td>
             <td class="actions"><button type="button" class="link danger" data-cancel>Cancel link</button></td>
           </tr>`,
@@ -579,12 +579,13 @@ $('#addForm').addEventListener('submit', async (e) => {
   formError(f);
   try {
     const role = f.elements.role.value;
-    const label = f.elements.label.value.trim();
-    const { url } = await api('users', { method: 'POST', body: { kind: 'join', role, label } });
+    const name = f.elements.name.value.trim();
+    const email = f.elements.email.value.trim();
+    const { url } = await api('users', { method: 'POST', body: { kind: 'join', role, name, email } });
     f.reset();
     issued(
-      `${ROLE_LABEL[role]} invite link${label ? ` for ${label}` : ''}`,
-      'Send it to them however you like. They open it and create their own account. It works once and expires in 7 days.',
+      `${ROLE_LABEL[role]} invite link for ${name} (${email})`,
+      'Send it to them however you like. They open it, choose a password, and they’re in. It works once and expires in 7 days.',
       url,
     );
     loadPeople();
@@ -607,19 +608,16 @@ async function showLinkForm() {
   try {
     const l = await api(`join?t=${encodeURIComponent(linkToken)}`);
     linkKind = l.kind;
-    $('.join-only', f).hidden = l.kind !== 'join';
-    for (const n of ['name', 'email']) f.elements[n].disabled = l.kind !== 'join';
-    if (l.kind === 'join') {
-      $('#joinIntro').textContent = `You're invited as ${ROLE_LABEL[l.role]}. Create your account.`;
-      $('#pwLabel').textContent = 'Choose a password';
-      $('#joinBtn').textContent = 'Create my account';
-      f.elements.name.focus();
-    } else {
-      $('#joinIntro').textContent = `Choose a new password for ${l.name || l.email}.`;
-      $('#pwLabel').textContent = 'New password';
-      $('#joinBtn').textContent = 'Save password';
-      f.elements.password.focus();
-    }
+    $('#joinName').textContent = l.name;
+    $('#joinEmail').textContent = l.email;
+    $('#joinRole').textContent = ROLE_LABEL[l.role] || '';
+    f.elements.username.value = l.email;
+    $('#joinWho').hidden = false;
+    const join = l.kind === 'join';
+    $('#joinIntro').textContent = join ? 'You’re invited. Choose a password to finish your account.' : 'Choose a new password for your account.';
+    $('#pwLabel').textContent = join ? 'Choose a password' : 'New password';
+    $('#joinBtn').textContent = join ? 'Create my account' : 'Save password';
+    f.elements.password.focus();
   } catch (err) {
     $('#joinIntro').textContent = err.message;
     for (const el of f.querySelectorAll('label, #joinBtn')) el.hidden = true;
@@ -636,9 +634,7 @@ $('#joinForm').addEventListener('submit', async (e) => {
   const btn = $('#joinBtn');
   btn.disabled = true;
   try {
-    const payload = { t: linkToken, password: pw };
-    if (linkKind === 'join') Object.assign(payload, { name: f.elements.name.value, email: f.elements.email.value });
-    const { user } = await api('join', { method: 'POST', body: payload });
+    const { user } = await api('join', { method: 'POST', body: { t: linkToken, password: pw } });
     history.replaceState(null, '', location.pathname);
     f.reset();
     f.hidden = true;

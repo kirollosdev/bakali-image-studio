@@ -26,10 +26,13 @@
     <form id="joinForm" class="card" novalidate hidden>
       <h1>Bakali Image Studio</h1>
       <p class="sub" id="joinIntro"></p>
-      <div class="join-only">
-        <label>Your name<input name="name" autocomplete="name" maxlength="80" required /></label>
-        <label>Email<input name="email" type="email" autocomplete="username" required /></label>
-      </div>
+      <dl class="who-card" id="joinWho" hidden>
+        <div><dt>Name</dt><dd id="joinName"></dd></div>
+        <div><dt>Email</dt><dd id="joinEmail"></dd></div>
+        <div><dt>Role</dt><dd id="joinRole"></dd></div>
+      </dl>
+      <!-- lets password managers save the login under the right email -->
+      <input name="username" type="email" autocomplete="username" hidden />
       <label><span id="pwLabel">Password</span><input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
       <label>Repeat password<input name="again" type="password" autocomplete="new-password" minlength="8" required /></label>
       <p class="form-error" role="alert" hidden></p>
@@ -127,7 +130,8 @@
     <form id="addForm" class="add" novalidate>
       <h3>Invite someone</h3>
       <div class="add-grid">
-        <label>Who is it for? <span class="opt">(optional, for your reference)</span><input name="label" maxlength="80" placeholder="e.g. Sara – designer" /></label>
+        <label>Name<input name="name" maxlength="80" required autocomplete="off" /></label>
+        <label>Email<input name="email" type="email" required autocomplete="off" /></label>
         <label>Role
           <select name="role"><option value="editor">Editor</option><option value="viewer">Viewer</option></select>
         </label>
