@@ -151,7 +151,7 @@ input[type="search"], select {
   font-size: 14px;
   transition: border-color .15s, background .15s;
 }
-.drop:hover, .drop.over { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }
+.drop:hover, tr.drag-over .drop { border-color: var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }
 .drop .ph { padding: 8px; }
 .drop .preview { width: 100%; height: 100%; object-fit: contain; background: #fff; }
 tr.done .drop { border-style: solid; border-color: var(--ok-line); }
@@ -390,3 +390,6 @@ button.avatar:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%,
 button.me-text { padding: 4px 6px; margin: -4px -6px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 button.me-text:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
 button.me-text:hover strong { color: var(--brand); }
+
+tr.drag-over > td { background: color-mix(in srgb, var(--brand) 6%, transparent); }
+tr.drag-over > td:first-child { box-shadow: inset 4px 0 0 var(--brand); }

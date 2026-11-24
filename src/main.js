@@ -105,9 +105,9 @@ function rowHTML(raw, i) {
     <td class="c-new">
       ${
         edit
-          ? `<label class="drop" data-drop="${it.id}" tabindex="0" title="Click to upload · drop a file · hover and press Ctrl+V">
+          ? `<label class="drop" data-drop="${it.id}" tabindex="0" title="Click to upload · drop a file anywhere on the row · hover and press Ctrl+V">
               <input type="file" accept="image/*" data-file="${it.id}" hidden />
-              <span class="ph">Click, drop, or hover + Ctrl+V</span>
+              <span class="ph">Click, drop on the row, or hover + Ctrl+V</span>
               <img class="preview" alt="" loading="lazy" decoding="async" hidden />
               <span class="spin" hidden>Uploading…</span>
             </label>
@@ -329,24 +329,39 @@ rowsEl.addEventListener('click', (e) => {
   else if (t.dataset.dl) downloadOne(Number(t.dataset.dl), t);
 });
 
+// A file can be dropped anywhere on a row; it becomes that row's new image.
+const dropRow = (e) =>
+  canEdit() && e.dataTransfer?.types.includes('Files') ? e.target.closest('tr[data-id]') : null;
+let overRow = null;
+function markRow(tr) {
+  if (overRow === tr) return;
+  overRow?.classList.remove('drag-over');
+  overRow = tr;
+  tr?.classList.add('drag-over');
+}
 rowsEl.addEventListener('dragover', (e) => {
-  const z = e.target.closest('label[data-drop]');
-  if (!z) return;
+  const tr = dropRow(e);
+  if (!tr) return;
   e.preventDefault();
-  z.classList.add('over');
+  e.dataTransfer.dropEffect = 'copy';
+  markRow(tr);
 });
-rowsEl.addEventListener('dragleave', (e) => e.target.closest('[data-drop]')?.classList.remove('over'));
+rowsEl.addEventListener('dragleave', (e) => {
+  if (overRow && !overRow.contains(e.relatedTarget)) markRow(null);
+});
 rowsEl.addEventListener('drop', (e) => {
-  const z = e.target.closest('label[data-drop]');
-  if (!z) return;
+  const tr = dropRow(e);
+  markRow(null);
+  if (!tr) return;
   e.preventDefault();
-  z.classList.remove('over');
-  setImage(Number(z.dataset.drop), e.dataTransfer.files[0]);
+  const file = [...e.dataTransfer.files].find((f) => f.type.startsWith('image/')) || e.dataTransfer.files[0];
+  if (file) setImage(Number(tr.dataset.id), file);
 });
-// A file dropped outside a New image box is ignored instead of opening in the tab.
+// A file dropped outside a row is ignored instead of opening in the tab.
 window.addEventListener('dragover', (e) => e.preventDefault());
 window.addEventListener('drop', (e) => {
-  if (!e.target.closest('[data-drop]')) e.preventDefault();
+  markRow(null);
+  if (!e.target.closest('tr[data-id]')) e.preventDefault();
 });
 
 // ---------- paste ----------
