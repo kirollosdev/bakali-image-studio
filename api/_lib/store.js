@@ -6,7 +6,9 @@ export async function readJSON(pathname, fallback) {
   const r = await get(pathname, { access: 'private', useCache: false });
   if (!r || r.statusCode !== 200) return { data: structuredClone(fallback), etag: null };
   const text = await new Response(r.stream).text();
-  return { data: JSON.parse(text), etag: r.blob.etag };
+  // Larger documents are served compressed, which turns the ETag into a weak one (W/"…").
+  // Conditional writes only accept the strong form, so drop the W/ prefix.
+  return { data: JSON.parse(text), etag: r.blob.etag?.replace(/^W\//, '') || null };
 }
 
 async function writeJSON(pathname, data, etag) {
