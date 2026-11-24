@@ -47,11 +47,6 @@ function norm(s) {
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 }
-const nameIndex = new Map();
-for (const it of items) {
-  nameIndex.set(norm(it.nameAr), it);
-  nameIndex.set(norm(it.nameEn), it);
-}
 
 function saveFile(blob, name) {
   const a = document.createElement('a');
@@ -267,34 +262,6 @@ async function removeImage(id) {
   }
 }
 
-async function bulkUpload(files) {
-  if (!canEdit()) return;
-  const unmatched = [];
-  const matched = [];
-  for (const f of files) {
-    const it = nameIndex.get(norm(f.name));
-    if (!it || !f.type.startsWith('image/')) unmatched.push(f.name);
-    else matched.push([it.id, f]);
-  }
-  toast(`Uploading ${matched.length} image${matched.length === 1 ? '' : 's'}…`, 60000);
-  // Three at a time keeps the browser responsive on big batches.
-  const queue = [...matched];
-  await Promise.all(
-    Array.from({ length: 3 }, async () => {
-      while (queue.length) {
-        const [id, f] = queue.shift();
-        await setImage(id, f);
-      }
-    }),
-  );
-  toast(
-    unmatched.length
-      ? `Uploaded ${matched.length}. Not matched (${unmatched.length}): ${unmatched.slice(0, 6).join(', ')}${unmatched.length > 6 ? '…' : ''}`
-      : `Uploaded ${matched.length} image${matched.length === 1 ? '' : 's'}.`,
-    unmatched.length ? 9000 : 3500,
-  );
-}
-
 async function downloadOne(id, btn) {
   btn.disabled = true;
   try {
@@ -376,12 +343,10 @@ rowsEl.addEventListener('drop', (e) => {
   z.classList.remove('over');
   setImage(Number(z.dataset.drop), e.dataTransfer.files[0]);
 });
-// Files dropped outside a row cell go through bulk matching instead of opening in the tab.
+// A file dropped outside a New image box is ignored instead of opening in the tab.
 window.addEventListener('dragover', (e) => e.preventDefault());
 window.addEventListener('drop', (e) => {
-  if (e.target.closest('[data-drop]')) return;
-  e.preventDefault();
-  if (e.dataTransfer.files.length && canEdit()) bulkUpload([...e.dataTransfer.files]);
+  if (!e.target.closest('[data-drop]')) e.preventDefault();
 });
 
 // ---------- paste ----------
@@ -429,7 +394,6 @@ async function pasteFromClipboard(id) {
 }
 
 // ---------- toolbar ----------
-$('#bulkInput').addEventListener('change', (e) => bulkUpload([...e.target.files]).finally(() => (e.target.value = '')));
 $('#downloadAll').addEventListener('click', downloadAll);
 let searchTimer;
 $('#search').addEventListener('input', () => {

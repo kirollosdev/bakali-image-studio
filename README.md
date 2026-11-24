@@ -5,7 +5,7 @@ A small web app to replace the menu photos of **Bakali El Salam** on Talabat. It
 ## Features
 
 - Table of all 113 menu items (Arabic and English)
-- Upload a new photo per item by click, drag and drop, paste (Ctrl+V) or bulk upload matched by file name
+- Upload a new photo per item by click, drag and drop, or paste (Ctrl+V)
 - Download one photo, or all as a zip, named after the Talabat item (Arabic or English)
 - Login with three roles:
   - **Developer**: everything, plus managing people
