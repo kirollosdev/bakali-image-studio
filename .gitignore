@@ -3,3 +3,5 @@ dist
 .vercel
 .env*
 scripts/seed
+.vercel
+.env*
