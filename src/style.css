@@ -387,3 +387,6 @@ button.avatar:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%,
   .shell.collapsed .side-nav { width: auto; grid-auto-flow: column; }
   .shell.collapsed .progress { width: 80px; }
 }
+button.me-text { padding: 4px 6px; margin: -4px -6px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+button.me-text:hover { background: color-mix(in srgb, var(--brand) 8%, transparent); }
+button.me-text:hover strong { color: var(--brand); }
