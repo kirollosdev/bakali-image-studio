@@ -38,12 +38,6 @@ function sameText(a, b) {
   return timingSafeEqual(x, y);
 }
 
-export function newPassword() {
-  // 12 chars, no look-alikes (0/O, 1/l/I).
-  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-  return [...randomBytes(12)].map((b) => abc[b % abc.length]).join('');
-}
-
 export function validPassword(pw) {
   if (typeof pw !== 'string' || pw.length < 8) throw new HttpError(400, 'Password must be at least 8 characters.');
   if (pw.length > 200) throw new HttpError(400, 'Password is too long.');
@@ -52,19 +46,27 @@ export function validPassword(pw) {
 // ---------- users ----------
 // The developer account comes from ADMIN_EMAIL / ADMIN_PASSWORD; a record for it is stored
 // only after the developer changes their password in the app.
+// data/users.json holds { users: [...], links: [...] }.
+const EMPTY = { users: [], links: [] };
 let cache = { at: 0, users: null };
+export async function readUsersDoc() {
+  const { data } = await readJSON(USERS_PATH, EMPTY);
+  data.users ??= [];
+  data.links ??= [];
+  cache = { at: Date.now(), users: data.users };
+  return data;
+}
 export async function loadUsers(fresh = false) {
   if (!fresh && cache.users && Date.now() - cache.at < 10_000) return cache.users;
-  const { data } = await readJSON(USERS_PATH, { users: [] });
-  cache = { at: Date.now(), users: data.users };
-  return data.users;
-}
-export function setUsersCache(users) {
-  cache = { at: Date.now(), users };
+  return (await readUsersDoc()).users;
 }
 export const updateUsers = async (fn) => {
-  const { data, result } = await updateJSON(USERS_PATH, { users: [] }, fn);
-  setUsersCache(data.users);
+  const { data, result } = await updateJSON(USERS_PATH, EMPTY, (d) => {
+    d.users ??= [];
+    d.links ??= [];
+    return fn(d);
+  });
+  cache = { at: Date.now(), users: data.users };
   return result;
 };
 

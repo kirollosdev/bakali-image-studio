@@ -494,25 +494,47 @@ $('#passwordForm').addEventListener('submit', async (e) => {
 // People
 const ROLE_LABEL = { developer: 'Developer', editor: 'Editor', viewer: 'Viewer' };
 
-function issued(title, email, password) {
+function issued(title, note, url) {
   $('#issuedTitle').textContent = title;
-  $('#issuedText').textContent = `${location.origin}\nEmail: ${email}\nPassword: ${password}`;
+  $('#issuedNote').textContent = note;
+  $('#issuedText').textContent = url;
   $('#issued').hidden = false;
+  $('#issued').scrollIntoView({ block: 'nearest' });
 }
 $('#copyIssued').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText($('#issuedText').textContent);
-    toast('Copied.');
+    toast('Link copied.');
   } catch {
-    toast('Copy failed. Select the text and copy it.');
+    toast('Copy failed. Select the link and copy it.');
   }
 });
+
+const until = (ts) => new Date(ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
+function renderLinks(links, users) {
+  const name = (email) => users.find((u) => u.email === email)?.name || email;
+  $('#linkRows').innerHTML = links.length
+    ? links
+        .map(
+          (l) => `<tr data-link="${esc(l.id)}">
+            <td>${l.kind === 'join' ? `Invite · ${ROLE_LABEL[l.role]}` : 'Password reset'}</td>
+            <td>${esc(l.kind === 'join' ? l.label || '—' : name(l.email))}</td>
+            <td>${until(l.expiresAt)}</td>
+            <td class="actions"><button type="button" class="link danger" data-cancel>Cancel link</button></td>
+          </tr>`,
+        )
+        .join('')
+    : '<tr><td colspan="4" class="muted">No open links.</td></tr>';
+}
 
 async function loadPeople() {
   const tb = $('#peopleRows');
   tb.innerHTML = '<tr><td colspan="4" class="muted">Loading…</td></tr>';
+  $('#linkRows').innerHTML = '';
   try {
-    const { users } = await api('users');
+    const { users, links } = await api('users');
+    renderLinks(links, users);
     tb.innerHTML = users
       .map((u) =>
         u.role === 'developer'
@@ -524,7 +546,7 @@ async function loadPeople() {
                 ${['editor', 'viewer'].map((r) => `<option value="${r}" ${r === u.role ? 'selected' : ''}>${ROLE_LABEL[r]}</option>`).join('')}
               </select></td>
               <td class="actions">
-                <button type="button" class="link" data-reset>Reset password</button>
+                <button type="button" class="link" data-reset>Reset password link</button>
                 <button type="button" class="link danger" data-del>Remove</button>
               </td>
             </tr>`,
@@ -561,9 +583,9 @@ $('#peopleRows').addEventListener('click', async (e) => {
   const name = tr.cells[0].textContent;
   try {
     if (e.target.matches('[data-reset]')) {
-      if (!confirm(`Reset ${name}'s password? They will be signed out.`)) return;
-      const { password } = await api('users', { method: 'PATCH', body: { email, resetPassword: true } });
-      issued(`New password for ${name}`, email, password);
+      const { url } = await api('users', { method: 'POST', body: { kind: 'reset', email } });
+      issued(`Password reset link for ${name}`, 'Send it to them. They open it and choose a new password. It works once and expires in 7 days.', url);
+      loadPeople();
     } else if (e.target.matches('[data-del]')) {
       if (!confirm(`Remove ${name}? They lose access right away.`)) return;
       await api('users', { method: 'DELETE', body: { email } });
@@ -575,20 +597,94 @@ $('#peopleRows').addEventListener('click', async (e) => {
   }
 });
 
+$('#linkRows').addEventListener('click', async (e) => {
+  const tr = e.target.closest('tr[data-link]');
+  if (!tr || !e.target.matches('[data-cancel]')) return;
+  try {
+    await api('users', { method: 'DELETE', body: { linkId: tr.dataset.link } });
+    toast('Link cancelled. It no longer works.');
+    loadPeople();
+  } catch (err) {
+    toast(err.message, 6000);
+  }
+});
+
 $('#addForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.currentTarget;
   formError(f);
   try {
-    const { user, password } = await api('users', {
-      method: 'POST',
-      body: { name: f.elements.name.value, email: f.elements.email.value, role: f.elements.role.value },
-    });
+    const role = f.elements.role.value;
+    const label = f.elements.label.value.trim();
+    const { url } = await api('users', { method: 'POST', body: { kind: 'join', role, label } });
     f.reset();
-    issued(`${user.name} added as ${ROLE_LABEL[user.role]}`, user.email, password);
+    issued(
+      `${ROLE_LABEL[role]} invite link${label ? ` for ${label}` : ''}`,
+      'Send it to them however you like. They open it and create their own account. It works once and expires in 7 days.',
+      url,
+    );
     loadPeople();
   } catch (err) {
     formError(f, err.message);
+  }
+});
+
+// ---------- join / reset links ----------
+const linkToken = new URLSearchParams(location.search).get('link');
+let linkKind = null;
+
+async function showLinkForm() {
+  const f = $('#joinForm');
+  $('#loginForm').hidden = true;
+  f.hidden = false;
+  $('#login').hidden = false;
+  $('#app').hidden = true;
+  document.body.classList.remove('booting');
+  try {
+    const l = await api(`join?t=${encodeURIComponent(linkToken)}`);
+    linkKind = l.kind;
+    $('.join-only', f).hidden = l.kind !== 'join';
+    for (const n of ['name', 'email']) f.elements[n].disabled = l.kind !== 'join';
+    if (l.kind === 'join') {
+      $('#joinIntro').textContent = `You're invited as ${ROLE_LABEL[l.role]}. Create your account.`;
+      $('#pwLabel').textContent = 'Choose a password';
+      $('#joinBtn').textContent = 'Create my account';
+      f.elements.name.focus();
+    } else {
+      $('#joinIntro').textContent = `Choose a new password for ${l.name || l.email}.`;
+      $('#pwLabel').textContent = 'New password';
+      $('#joinBtn').textContent = 'Save password';
+      f.elements.password.focus();
+    }
+  } catch (err) {
+    $('#joinIntro').textContent = err.message;
+    for (const el of f.querySelectorAll('label, #joinBtn')) el.hidden = true;
+  }
+}
+
+$('#joinForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.currentTarget;
+  formError(f);
+  const pw = f.elements.password.value;
+  if (pw.length < 8) return formError(f, 'Use at least 8 characters.');
+  if (pw !== f.elements.again.value) return formError(f, 'The passwords don’t match.');
+  const btn = $('#joinBtn');
+  btn.disabled = true;
+  try {
+    const payload = { t: linkToken, password: pw };
+    if (linkKind === 'join') Object.assign(payload, { name: f.elements.name.value, email: f.elements.email.value });
+    const { user } = await api('join', { method: 'POST', body: payload });
+    history.replaceState(null, '', location.pathname);
+    f.reset();
+    f.hidden = true;
+    $('#loginForm').hidden = false;
+    await enter(user);
+    toast(linkKind === 'join' ? `Welcome, ${user.name}!` : 'Password saved.');
+  } catch (err) {
+    formError(f, err.message);
+  } finally {
+    btn.disabled = false;
   }
 });
 
@@ -637,6 +733,10 @@ $('#category').insertAdjacentHTML(
   cats.map(([en, ar]) => `<option value="${esc(en)}">${esc(en)} · ${esc(ar)} (${items.filter((i) => i.catEn === en).length})</option>`).join(''),
 );
 
-api('session')
-  .then(({ user }) => enter(user))
-  .catch(showLogin);
+if (linkToken) {
+  showLinkForm();
+} else {
+  api('session')
+    .then(({ user }) => enter(user))
+    .catch(showLogin);
+}

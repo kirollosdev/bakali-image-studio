@@ -19,7 +19,22 @@
       <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
       <p class="form-error" role="alert" hidden></p>
       <button class="btn primary block" type="submit">Log in</button>
-      <p class="hint">No account? Ask the developer to add you.</p>
+      <p class="hint">No account? Ask the developer for an invite link.</p>
+    </form>
+
+    <!-- Opened from a join or reset link -->
+    <form id="joinForm" class="card" novalidate hidden>
+      <h1>Bakali Image Studio</h1>
+      <p class="sub" id="joinIntro"></p>
+      <div class="join-only">
+        <label>Your name<input name="name" autocomplete="name" maxlength="80" required /></label>
+        <label>Email<input name="email" type="email" autocomplete="username" required /></label>
+      </div>
+      <label><span id="pwLabel">Password</span><input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <label>Repeat password<input name="again" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <p class="form-error" role="alert" hidden></p>
+      <button class="btn primary block" type="submit" id="joinBtn">Create my account</button>
+      <p class="hint"><a href="/">Back to log in</a></p>
     </form>
   </section>
 
@@ -111,28 +126,37 @@
   <!-- People (developer only) -->
   <dialog id="people" class="panel">
     <header class="panel-head"><h2>People</h2><button type="button" class="btn small ghost" data-close>Close</button></header>
-    <p class="sub">Editors can upload, replace and remove images. Viewers can only look and download.</p>
+    <p class="sub">Editors can upload, replace and remove images. Viewers can only look and download. No emails are sent: you create a link and share it yourself.</p>
+
+    <form id="addForm" class="add" novalidate>
+      <h3>Invite someone</h3>
+      <div class="add-grid">
+        <label>Who is it for? <span class="opt">(optional, for your reference)</span><input name="label" maxlength="80" placeholder="e.g. Sara – designer" /></label>
+        <label>Role
+          <select name="role"><option value="editor">Editor</option><option value="viewer">Viewer</option></select>
+        </label>
+        <button class="btn primary" type="submit">Create invite link</button>
+      </div>
+      <p class="form-error" role="alert" hidden></p>
+    </form>
+
+    <div id="issued" class="issued" hidden>
+      <p><strong id="issuedTitle"></strong></p>
+      <p id="issuedNote"></p>
+      <div class="issued-box"><code id="issuedText"></code><button type="button" class="btn small" id="copyIssued">Copy link</button></div>
+    </div>
+
+    <h3>Team</h3>
     <table class="people">
       <thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead>
       <tbody id="peopleRows"></tbody>
     </table>
-    <form id="addForm" class="add" novalidate>
-      <h3>Add a person</h3>
-      <div class="add-grid">
-        <label>Name<input name="name" required maxlength="80" /></label>
-        <label>Email<input name="email" type="email" required /></label>
-        <label>Role
-          <select name="role"><option value="editor">Editor</option><option value="viewer">Viewer</option></select>
-        </label>
-        <button class="btn primary" type="submit">Add</button>
-      </div>
-      <p class="form-error" role="alert" hidden></p>
-    </form>
-    <div id="issued" class="issued" hidden>
-      <p><strong id="issuedTitle"></strong></p>
-      <p>Send them this link and password. It is shown only once.</p>
-      <div class="issued-box"><code id="issuedText"></code><button type="button" class="btn small" id="copyIssued">Copy</button></div>
-    </div>
+
+    <h3>Open links</h3>
+    <table class="people">
+      <thead><tr><th>Link</th><th>For</th><th>Expires</th><th></th></tr></thead>
+      <tbody id="linkRows"></tbody>
+    </table>
   </dialog>
 
   <!-- Change own password -->
