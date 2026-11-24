@@ -75,7 +75,7 @@ export async function findUser(email, fresh = false) {
   const users = await loadUsers(fresh);
   const rec = users.find((u) => u.email === e);
   if (e === adminEmail()) {
-    return { email: e, name: rec?.name || 'Developer', role: 'developer', hash: rec?.hash || null, v: rec?.v || 'env' };
+    return { email: e, name: rec?.name || 'Developer', role: 'developer', hash: rec?.hash || null, v: rec?.v || 'env', avatar: rec?.avatar || null };
   }
   return rec || null;
 }
@@ -128,4 +128,15 @@ export async function requireRole(req, role) {
   return u;
 }
 
-export const publicUser = (u) => ({ email: u.email, name: u.name, role: u.role });
+export const publicUser = (u) => ({ email: u.email, name: u.name, role: u.role, avatar: u.avatar || null });
+
+// The developer has no stored record until they change something about their account.
+export function ownRecord(d, me) {
+  let rec = d.users.find((u) => u.email === me.email);
+  if (!rec && me.email === adminEmail()) {
+    rec = { email: me.email, name: me.name, role: 'developer', v: me.v, createdAt: new Date().toISOString() };
+    d.users.push(rec);
+  }
+  if (!rec) throw new HttpError(404, 'Account not found.');
+  return rec;
+}

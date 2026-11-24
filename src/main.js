@@ -502,9 +502,9 @@ async function loadPeople() {
     tb.innerHTML = users
       .map((u) =>
         u.role === 'developer'
-          ? `<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td><span class="role">Developer</span></td><td class="muted">You</td></tr>`
+          ? `<tr><td><span class="person"><span class="avatar sm">${avatarHTML(u)}</span>${esc(u.name)}</span></td><td>${esc(u.email)}</td><td><span class="role">Developer</span></td><td class="muted">You</td></tr>`
           : `<tr data-email="${esc(u.email)}">
-              <td>${esc(u.name)}</td>
+              <td><span class="person"><span class="avatar sm">${avatarHTML(u)}</span><span data-name>${esc(u.name)}</span></span></td>
               <td>${esc(u.email)}</td>
               <td><select data-role aria-label="Role for ${esc(u.name)}">
                 ${['editor', 'viewer'].map((r) => `<option value="${r}" ${r === u.role ? 'selected' : ''}>${ROLE_LABEL[r]}</option>`).join('')}
@@ -544,7 +544,7 @@ $('#peopleRows').addEventListener('click', async (e) => {
   const tr = e.target.closest('tr[data-email]');
   if (!tr) return;
   const email = tr.dataset.email;
-  const name = tr.cells[0].textContent;
+  const name = $('[data-name]', tr).textContent;
   try {
     if (e.target.matches('[data-reset]')) {
       const { url } = await api('users', { method: 'POST', body: { kind: 'reset', email } });
@@ -593,6 +593,89 @@ $('#addForm').addEventListener('submit', async (e) => {
     formError(f, err.message);
   }
 });
+
+// ---------- profile picture ----------
+const initial = (name) => esc((name || '?').trim().charAt(0).toUpperCase());
+const avatarHTML = (u) => (u.avatar ? `<img src="${imageUrl(u.avatar)}" alt="" decoding="async" />` : initial(u.name));
+
+function paintAvatars() {
+  if (!me) return;
+  $('#meAvatar').innerHTML = avatarHTML(me);
+  $('#profileAvatar').innerHTML = avatarHTML(me);
+  $('#profileRemove').hidden = !me.avatar;
+  $('#profileUploadLabel').textContent = me.avatar ? 'Change picture' : 'Upload picture';
+}
+
+// Center-crop to a square and shrink to 256px WebP before upload.
+async function squareAvatar(file) {
+  const bmp = await createImageBitmap(file);
+  const side = Math.min(bmp.width, bmp.height);
+  const c = new OffscreenCanvas(256, 256);
+  c.getContext('2d').drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, 256, 256);
+  bmp.close();
+  return c.convertToBlob({ type: 'image/webp', quality: 0.86 });
+}
+
+async function avatarRequest(method, blob) {
+  const res = await fetch('/api/avatar', {
+    method,
+    credentials: 'same-origin',
+    headers: blob ? { 'content-type': blob.type } : undefined,
+    body: blob,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Could not save the picture.');
+  return data.user;
+}
+
+const openProfile = () => {
+  paintAvatars();
+  $('#profile').showModal();
+};
+$('#openProfile').addEventListener('click', openProfile);
+$('#meAvatar').addEventListener('click', openProfile);
+
+$('#profileFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return toast('That file is not an image.');
+  const label = $('#profileUploadLabel');
+  label.textContent = 'Saving…';
+  try {
+    me = { ...me, ...(await avatarRequest('POST', await squareAvatar(file))) };
+    toast('Profile picture saved.');
+  } catch (err) {
+    toast(err.message, 6000);
+  } finally {
+    paintAvatars();
+  }
+});
+
+$('#profileRemove').addEventListener('click', async () => {
+  try {
+    me = { ...me, ...(await avatarRequest('DELETE')) };
+    toast('Profile picture removed.');
+  } catch (err) {
+    toast(err.message, 6000);
+  } finally {
+    paintAvatars();
+  }
+});
+
+// ---------- sidebar collapse ----------
+const SIDE_KEY = 'bis:sideCollapsed';
+function setSide(collapsed) {
+  $('#app').classList.toggle('collapsed', collapsed);
+  const t = $('#toggleSide');
+  const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+  t.title = label;
+  t.setAttribute('aria-label', label);
+  t.setAttribute('aria-expanded', String(!collapsed));
+  try { localStorage.setItem(SIDE_KEY, collapsed ? '1' : '0'); } catch {}
+}
+$('#toggleSide').addEventListener('click', () => setSide(!$('#app').classList.contains('collapsed')));
+try { setSide(localStorage.getItem(SIDE_KEY) === '1'); } catch { setSide(false); }
 
 // ---------- join / reset links ----------
 const linkToken = new URLSearchParams(location.search).get('link');
@@ -664,7 +747,7 @@ async function enter(user) {
   me = user;
   document.body.dataset.role = user.role;
   $('#meName').textContent = user.name;
-  $('#meInitial').textContent = (user.name || '?').trim().charAt(0).toUpperCase();
+  paintAvatars();
   $('#meRole').textContent = ROLE_LABEL[user.role];
   $('#login').hidden = true;
   $('#app').hidden = false;

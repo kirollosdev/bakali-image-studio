@@ -7,7 +7,7 @@ import { requireRole } from './_lib/auth.js';
 export const GET = route(async (req) => {
   await requireRole(req, 'viewer');
   const p = new URL(req.url).searchParams.get('p') || '';
-  if (!/^images\/\d+\/[\w.-]+$/.test(p)) throw new HttpError(400, 'Invalid image.');
+  if (!/^(images\/\d+|avatars)\/[\w.-]+$/.test(p)) throw new HttpError(400, 'Invalid image.');
   const r = await get(p, { access: 'private' });
   if (!r || r.statusCode !== 200) throw new HttpError(404, 'No image.');
   return new Response(r.stream, {

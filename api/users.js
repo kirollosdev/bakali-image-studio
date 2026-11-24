@@ -6,7 +6,7 @@ import { newLink, liveLinks, linkUrl } from './_lib/links.js';
 // and shares it however they like. Join links add an editor or viewer; reset links let
 // an existing person choose a new password.
 const TEAM_ROLES = ['editor', 'viewer'];
-const view = (u) => ({ email: u.email, name: u.name, role: u.role, createdAt: u.createdAt || null });
+const view = (u) => ({ email: u.email, name: u.name, role: u.role, avatar: u.avatar || null, createdAt: u.createdAt || null });
 const linkView = (l) => ({ id: l.id, kind: l.kind, role: l.role || null, name: l.name || '', email: l.email || null, expiresAt: l.expiresAt });
 
 function checkRole(role) {

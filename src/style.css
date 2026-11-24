@@ -350,3 +350,40 @@ tr.busy .drop { border-color: var(--brand); }
 .who-card dt { color: var(--muted); font-size: 14px; }
 .who-card dd { margin: 0; font-weight: 600; word-break: break-all; }
 @media (max-width: 700px) { .add-grid { grid-template-columns: 1fr; } }
+
+/* ---------- avatars ---------- */
+.avatar { overflow: hidden; padding: 0; border: 0; font: inherit; font-weight: 700; cursor: pointer; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar.sm { width: 28px; height: 28px; font-size: 13px; cursor: default; }
+.avatar.xl { width: 120px; height: 120px; font-size: 44px; cursor: default; }
+button.avatar:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
+.person { display: inline-flex; align-items: center; gap: 10px; }
+.profile-body { display: flex; align-items: center; gap: 22px; margin-top: 14px; }
+.profile-actions { display: grid; gap: 10px; flex: 1; }
+.profile-actions .btn { width: 100%; }
+.hint.left { text-align: left; margin: 0; }
+
+/* ---------- sidebar collapse ---------- */
+.side-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.toggle { flex: none; }
+.toggle svg { transition: transform .2s; }
+.shell { transition: grid-template-columns .2s ease; }
+.shell.collapsed { grid-template-columns: 76px minmax(0, 1fr); }
+.shell.collapsed .side { padding: 18px 12px; align-items: center; }
+.shell.collapsed .brand,
+.shell.collapsed .when-open { display: none; }
+.shell.collapsed .side-head { justify-content: center; }
+.shell.collapsed .toggle svg { transform: scaleX(-1); }
+.shell.collapsed .progress { width: 100%; text-align: center; }
+.shell.collapsed .progress p { text-align: center; font-size: 13px; }
+.shell.collapsed .side-nav { width: 100%; }
+.shell.collapsed .nav-item { justify-content: center; padding: 10px 0; }
+.shell.collapsed .me { flex-direction: column; gap: 10px; width: 100%; }
+
+@media (max-width: 900px) {
+  .shell.collapsed { grid-template-columns: 1fr; }
+  .shell.collapsed .side { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .shell.collapsed .me { flex-direction: row; width: auto; margin-left: auto; border-top: 0; padding-top: 0; }
+  .shell.collapsed .side-nav { width: auto; grid-auto-flow: column; }
+  .shell.collapsed .progress { width: 80px; }
+}
